@@ -9,12 +9,19 @@ export masif_matlab
 
 # ================= arg parse ===================
 argc=$#
-if [ $argc -ne 3 ]
+if [ $argc -ne 3 ] && [ $argc -ne 4 ]
 then
         #printf "usage:\n$0   UpdbID_Uchain   CpdbID_Cchain   [g_truth_d_cut (2.0)]\n"
-        printf "usage:\n$0   UpdbID_Uchain   CpdbID_Cchain   ROCAUC_filename\n"
+        printf "usage:\n$0   UpdbID_Uchain   CpdbID_Cchain   ROCAUC_filename   [save_ply_scores (1/(0)]\n"
         exit 1
 fi
+if [ $argc -gt 3 ]
+then
+    to_save_ply_scores=$4
+else
+    to_save_ply_scores=0
+fi
+
 u_pdb_name=$(echo $1| cut -d"_" -f1)
 u_chain_name=$(echo $1| cut -d"_" -f2)
 C_pdb_name=$(echo $2| cut -d"_" -f1)
@@ -31,4 +38,4 @@ python $masif_source/data_preparation/05-masif_site_precompute.py    $u_ppi_dc_n
 
 python -W ignore $masif_source/masif_site/masif_site_predict.py nn_models.all_feat_3l.custom_params   $u_ppi_dc_name
 
-python -W ignore $masif_source/masif_site/masif_site_comp_ROCAUC.py nn_models.all_feat_3l.custom_params   $u_ppi_dc_name   $ROCAUC_filename
+python -W ignore $masif_source/masif_site/masif_site_comp_ROCAUC.py nn_models.all_feat_3l.custom_params   $u_ppi_dc_name   $ROCAUC_filename   $to_save_ply_scores

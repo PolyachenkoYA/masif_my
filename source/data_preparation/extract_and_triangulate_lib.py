@@ -162,6 +162,6 @@ def find_iface(C_mesh, u_mesh, ground_truth_cut_dist, verbose=True):
     assert(len(d) == len(u_mesh.vertices))
     iface_v = np.where(d >= ground_truth_cut_dist)[0]
         
-    iface = filter_noise(iface_v, u_mesh)
+    iface = filter_noise(iface_v, u_mesh, noise_patch_size=-100)
     
     return iface

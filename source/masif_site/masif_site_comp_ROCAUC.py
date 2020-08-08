@@ -18,8 +18,9 @@ Released under an Apache License 2.0
 
 args = sys.argv[1:]
 argc = len(args)
-if(not argc in [3]):
-    print('usage:\n' + sys.argv[0] + '   params_model   PPI_id   ROCAUC_filename')
+if(not argc in [3, 4]):
+    print('usage:\n' + sys.argv[0] + '   params_model   PPI_id   ROCAUC_filename   [to_save_scores(1/(0))]')
+to_save_scores = False if(argc < 4) else (args[3] == '1')
 custom_params_file = args[0]
 ppi_pair_id = args[1]
 ROCAUC_filename = args[2]
@@ -64,3 +65,25 @@ try:
         print('ROCAUC = ' + str(roc_auc))    
 except: 
     print("No ROC AUC computed for protein (possibly, no ground truth defined in input)") 
+    
+if(to_save_scores):
+    mymesh.remove_attribute("vertex_iface")
+    mymesh.add_attribute("iface")
+    mymesh.set_attribute("iface", scores[0])
+    mymesh.remove_attribute("vertex_x")
+    mymesh.remove_attribute("vertex_y")
+    mymesh.remove_attribute("vertex_z")
+    mymesh.remove_attribute("face_vertex_indices")
+
+    if not os.path.exists(params["out_surf_dir"]):
+        os.makedirs(params["out_surf_dir"])
+
+    ply_filepath = params["out_surf_dir"] + pdb_id + "-pred_" + chain_name + ".ply"
+    pymesh.save_mesh(
+            ply_filepath,
+            mymesh,
+            *mymesh.get_attribute_names(),
+            use_float=True,
+            ascii=True
+    )
+    print("Successfully saved file " + ply_filepath)
