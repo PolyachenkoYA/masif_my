@@ -1,6 +1,7 @@
 import pymesh
 import os
 import sys
+import shutil
 from IPython.core.debugger import set_trace
 from sklearn.metrics import roc_auc_score
 import importlib
@@ -35,17 +36,17 @@ for key in custom_params:
     params[key] = custom_params[key]
 
 # Shape precomputation dir.
-parent_in_dir = params["masif_precomputation_dir"]
+#parent_in_dir = params["masif_precomputation_dir"]
 
 [pdb_id, chain_name] = ppi_pair_id.split("_")
 frame_id = pdb_id.split('-')[-1]
 scrores_filepath = params["out_pred_dir"] + "/pred_" + ppi_pair_id + ".npy"
-ply_file = masif_opts["ply_file_template"].format(pdb_id, chain_name)
+groundtruth_ply_filepath = masif_opts["ply_file_template"].format(pdb_id, chain_name)
     
 try:
-    mymesh = pymesh.load_mesh(ply_file)
+    mymesh = pymesh.load_mesh(groundtruth_ply_filepath)
 except:
-    print("File does not exist: {}".format(ply_file))
+    print("File does not exist: {}".format(groundtruth_ply_filepath))
     exit(1)
 
 try:
@@ -78,12 +79,18 @@ if(to_save_scores):
     if not os.path.exists(params["out_surf_dir"]):
         os.makedirs(params["out_surf_dir"])
 
-    ply_filepath = params["out_surf_dir"] + pdb_id + "-pred_" + chain_name + ".ply"
+    scores_ply_filepath = params["out_surf_dir"] + pdb_id + "-pred_" + chain_name + ".ply"
     pymesh.save_mesh(
-            ply_filepath,
+            scores_ply_filepath,
             mymesh,
             *mymesh.get_attribute_names(),
             use_float=True,
             ascii=True
     )
-    print("Successfully saved file " + ply_filepath)
+    print("Successfully saved file " + scores_ply_filepath)
+
+precomp_dir = os.path.join(params["masif_precomputation_dir"], ppi_pair_id)
+os.remove(groundtruth_ply_filepath)
+print(groundtruth_ply_filepath, 'deleted')
+shutil.rmtree(precomp_dir)
+print(precomp_dir, 'deleted')

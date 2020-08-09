@@ -6,6 +6,8 @@
 import sys
 import os
 import numpy as np
+import glob
+import subprocess
 from default_config.masif_opts import masif_opts
 import data_preparation.extract_and_triangulate_lib as ext_and_trg
 from input_output.extractPDB import extractPDB
@@ -21,7 +23,7 @@ if(not argc in [2, 3, 4]):
 ground_truth_cut_dist = float(args[2]) if len(args) > 2 else 2.0
 to_recompute = (args[3] == '1') if (len(args) > 3) else True
 u_pdb_name, u_chain_name, u_pdb_filepath, u_chain_filepath_base, u_chain_filepath = \
-    ext_and_trg.parse_names(args[0], tmp_dir=masif_opts["tmp_dir"])
+    ext_and_trg.parse_names(args[0])
 #ply_filepath = os.path.join(masif_opts['ply_chain_dir'], u_pdb_name + '-dc' + str(ground_truth_cut_dist) + '_' + u_chain_name + '.ply')
 ply_filepath = os.path.join(masif_opts['ply_chain_dir'], u_chain_filepath_base + '.ply')
 #ply_filepath = os.path.join(ext_and_trg.pdbs_dir, u_chain_filepath_base + '.ply')
@@ -51,4 +53,8 @@ save_ply(ply_filepath, u_regular_mesh.vertices,\
          normalize_charges=True, hbond=u_vertex_hbond, hphob=u_vertex_hphobicity,\
          iface=iface)
 ext_and_trg.copy_tmp2dst(ply_filepath, masif_opts['ply_chain_dir'])
-ext_and_trg.copy_tmp2dst(u_chain_filepath, masif_opts['pdb_chain_dir'])
+#ext_and_trg.copy_tmp2dst(u_chain_filepath, masif_opts['pdb_chain_dir'])
+
+# clean the /tmp dir
+subprocess.run(r'rm /' + os.path.dirname(u_chain_filepath_base) + r'/*' + u_pdb_name + r'*', shell=True)
+subprocess.run(r'rm /' + os.path.dirname(u_chain_filepath_base) + r'/*' + C_pdb_name + r'*', shell=True)

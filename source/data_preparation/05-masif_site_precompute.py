@@ -34,12 +34,12 @@ if not os.path.exists(my_precomp_dir):
     
 # Read directly from the ply file.
 fields = ppi_pair_id.split('_')
-ply_file = masif_opts['ply_file_template'].format(u_pdb_name, u_chain_name)
+ply_filepath = masif_opts['ply_file_template'].format(u_pdb_name, u_chain_name)
     
 # ================= computation =============
 # Compute shape complementarity between the two proteins. 
 input_feat, rho, theta, mask, neigh_indices, iface_labels, verts  = \
-    read_data_from_surface(ply_file, params)
+    read_data_from_surface(ply_filepath, params)
 
 # Save data only if everything went well. 
 np.save(my_precomp_dir+'p1_rho_wrt_center', rho)

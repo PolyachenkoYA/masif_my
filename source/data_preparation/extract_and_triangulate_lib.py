@@ -73,7 +73,7 @@ def parse_names(arg, tmp_dir=None, git_root=my.git_root_path(), verbose=True):
     #raw_pdb_path = os.path.join(git_root, 'data', 'masif_site', masif_opts['raw_pdb_dir'])
     raw_pdb_path = os.path.join(pdbs_dir, pdb_name[:4])
     pdb_filepath = os.path.join(raw_pdb_path, pdb_filename)
-    chain_filepath_base = os.path.join(raw_pdb_path if tmp_dir==None else tmp_dir, chain_filename_base)
+    chain_filepath_base = os.path.join(masif_opts["tmp_dir"] if tmp_dir==None else tmp_dir, chain_filename_base)
     chain_filepath = chain_filepath_base + '.pdb'
     return pdb_name, chain_name, pdb_filepath, chain_filepath_base, chain_filepath
 
