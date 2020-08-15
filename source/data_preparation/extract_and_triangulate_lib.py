@@ -126,24 +126,29 @@ def filter_noise(iface_v, mesh, noise_patch_size=-50, verbose=True):
         G.remove_nodes_from(not_iface_v)
         
         iface_components = [np.array(list(c)) for c in nx.connected_components(G)]
+        iface_components_N = len(iface_components)
         components_sizes = [len(c) for c in iface_components]
+        true_iface_components = []        
         if(noise_patch_size == -1):
-            max_components_inds = np.argmax(components_sizes)
-            N_big_components = len(max_components_inds)
+            max_component_ind = np.argmax(components_sizes)
+            max_size = components_sizes[max_component_ind]
+            true_iface_components.append(iface_components[max_component_ind])
+            for i in range(max_component_ind + 1, iface_components_N):
+                if(components_sizes[i] == max_size):
+                    true_iface_components.append(iface_components[i])
+            N_big_components = len(true_iface_components)
+            
             if(N_big_components > 1):
-                print('Warning: ', N_big_components, '> 1 iface components have the same size and they all are the biggest ones')
-            true_iface_components = []
-            for i in max_components_inds:
-                true_iface_components.append(iface_components[i])
+                print('Warning:\niface components ' + str(big_components_ids) + ' (' + str(N_big_components) + ' items) have the same size = ' + str(max_size) + ' and they all are the biggest ones')
+
         else:
             if(noise_patch_size == -2):
                 noise_patch_size = max(components_sizes) // 5
             elif(noise_patch_size < -2):
                 noise_patch_size = max(max(components_sizes) // 5, -noise_patch_size)
                 
-            true_iface_components = []
-            for G_c in iface_components:
-                if(len(G_c) > noise_patch_size):
+            for i, G_c in enumerate(iface_components):
+                if(components_sizes[i] > noise_patch_size):
                     true_iface_components.append(G_c)
                     
         true_iface_v = np.concatenate(true_iface_components)
@@ -162,6 +167,6 @@ def find_iface(C_mesh, u_mesh, ground_truth_cut_dist, verbose=True):
     assert(len(d) == len(u_mesh.vertices))
     iface_v = np.where(d >= ground_truth_cut_dist)[0]
         
-    iface = filter_noise(iface_v, u_mesh, noise_patch_size=-100)
+    iface = filter_noise(iface_v, u_mesh, noise_patch_size=-1)
     
     return iface

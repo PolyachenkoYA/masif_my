@@ -13,7 +13,7 @@ import pathlib
 import subprocess
 
 user_home_path = os.path.expanduser('~')
-error_str = '!!ERROR OCCURED!!'
+error_str = '\n!!ERROR OCCURED!!\n'
 my_eps = np.finfo(float).eps * 10
 colors = [(0.8500, 0.3250, 0.0980),
           (0.9290, 0.6940, 0.1250),
@@ -208,7 +208,18 @@ def pick_args(list, separators, ind):
 def index_safe(list, element, default=-1):
     return list.index(element) if element in list else default
 
-def parse_args(args, flags, possible_values=None, possible_arg_numbers=None, default_values=None, auto_exit=None, N_pos_args=0, verbose=True):
+def print_usage_default(flags, possible_values, possible_arg_numbers, default_values, exit_codes, N_pos_args):
+    print('=============================')
+    print('USAGE:')
+    print('number of positional arguments:', N_pos_args)
+    for i, f in enumerate(flags):
+        print('flag:', f)
+        print('\tpossible values:', possible_values[i])
+        print('\tpossible arg numbers:', possible_arg_numbers[i])
+        print('\tdafault value:', default_values[i])
+        print('\texit code:', exit_codes[i])
+
+def parse_args(args, flags, possible_values=None, possible_arg_numbers=None, default_values=None, exit_codes=None, N_pos_args=0, verbose=True):
     """
     possible_values:
     list of lists of possible values for each args group
@@ -220,8 +231,9 @@ def parse_args(args, flags, possible_values=None, possible_arg_numbers=None, def
     If('+' in self[i]) then len(flags_args[i]) must be > 0
     If(self[i] is None) then any len(flags_args[i])
     
-    auto_exit:
+    exit_codes:
     list of exit codes to return in case arguments for the i-th flags are invalid
+    if(self in None) then all codes are set to be 1
     If(self[i] is None) then don't exit of invalid arguments
     If(self is int) then self = [self] * N
     
@@ -229,7 +241,7 @@ def parse_args(args, flags, possible_values=None, possible_arg_numbers=None, def
     list of what to assign to flag_args[i] in case it has len==0 after all the parsing done
     """
     pos_args = args[0:N_pos_args]
-    args = args[(N_pos_args+1):]
+    args = args[N_pos_args:]
     
     N_flags = len(flags)
     if(possible_values is None):
@@ -238,24 +250,39 @@ def parse_args(args, flags, possible_values=None, possible_arg_numbers=None, def
         possible_arg_numbers = [None] * N_flags
     if(default_values is None):
         default_values = [None] * N_flags
-    if(auto_exit is None):
-        auto_exit = 1
-    if(isinstance(auto_exit, int)):
-        auto_exit = [auto_exit] * N_flags
+    if(exit_codes is None):
+        exit_codes = 1
+    if(isinstance(exit_codes, int)):
+        exit_codes = [exit_codes] * N_flags
     correct_input = [True] * N_flags
-
+    
+    all_wrong = False
+    for pos_arg in pos_args:
+        all_wrong = pos_arg in flags
+        if(all_wrong):
+            if(verbose):
+                print(error_str, 'Not enough positional arguments (' + str(N_pos_args) + ' needed):\n', '"' + str(args) + '"', '\nThey must be set before the key-arguments.')
+            all_wrong = True
+            break    
+    if(not args[0] in flags):
+        if(verbose):
+            print(error_str, 'Too many positional arguments (' + str(N_pos_args) + ' needed):\n', '"' + str(args) + '"', '\nThey must be set before the key-arguments.')
+        all_wrong = True
     if(len(possible_values) != len(flags)):
         if(verbose):
-            print(error_str + '\npossible_values: ', possible_values, '\nflags:', flags, '\nThey must have the same size', file=sys.stderr)
-        correct_input = [False] * N_flags
+            print(error_str, error_str + '\npossible_values: ', possible_values, '\nflags:', flags, '\nThey must have the same size', file=sys.stderr)
+        all_wrong = True
     if(len(possible_arg_numbers) != len(flags)):
         if(verbose):
-            print(error_str + '\npossible_arg_numbers: ', possible_arg_numbers, '\nflags:', flags, '\nThey must have the same size', file=sys.stderr)
-        correct_input = [False] * N_flags
-    if(len(auto_exit) != len(flags)):
+            print(error_str, 'possible_arg_numbers:', possible_arg_numbers, '\nflags:', flags, '\nThey must have the same size', file=sys.stderr)
+        all_wrong = True    
+    if(len(exit_codes) != len(flags)):
         if(verbose):
-            print(error_str + '\nauto_exit: ', auto_exit, '\nflags:', flags, '\nThey must have the same size', file=sys.stderr)
+            print(error_str, 'exit_codes: ', exit_codes, '\nflags:', flags, '\nThey must have the same size', file=sys.stderr)
+        all_wrong = True
+    if(all_wrong):
         correct_input = [False] * N_flags
+
     for i in range(N_flags):
         if((not default_values[i] is None) and (not 0 in possible_arg_numbers[i])):
             if(verbose):
@@ -275,22 +302,23 @@ def parse_args(args, flags, possible_values=None, possible_arg_numbers=None, def
                 if(not correct_input[i]):
                     flags_args[i] = [v]
                     break
-
+    
     for i in range(N_flags):
         if(not possible_arg_numbers[i] is None):
             if((len(possible_arg_numbers[i]) == 1) and (possible_arg_numbers[i][0] == 1) and correct_input[i]):
                 flags_args[i] = flags_args[i][0]
-
+    
     for i,f in enumerate(flags_args):
-        if((not auto_exit[i] is None) and (not correct_input[i])):
+        if((not exit_codes[i] is None) and (not correct_input[i])):
             if(verbose):
                 print(error_str + '\nparameter ', flags_args[i], ' for the "', flags[i], '" is invalid')
-            sys.exit(auto_exit[i])
-            
+            print_usage_default(flags, possible_values, possible_arg_numbers, default_values, exit_codes, N_pos_args)
+            sys.exit(exit_codes[i])
+                
     for i in range(N_flags):
         if(len(flags_args[i]) == 0):
             flags_args[i] = default_values[i]
-            
+                
     return pos_args + flags_args, [True] * N_pos_args + correct_input
 
 def safe_copy(src, dst):
