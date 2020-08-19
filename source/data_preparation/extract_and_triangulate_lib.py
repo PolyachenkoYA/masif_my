@@ -28,28 +28,6 @@ from geometry.vertices_graph import vertices_graph
 
 import my_utils as my
 
-chain_ids_table = \
-    {'2I25': {'uR':1, 'uL':0},
-     '1Z0K': {'uR':0, 'uL':3},
-     '2HQS': {'uR':0, 'uL':1},
-     '1R6Q': {'uR':0, 'uL':1},
-     '2UUY': {'uR':0, 'uL':1},
-     '1RKE': {'uR':1, 'uL':0},
-     '1D6R': {'uR':0, 'uL':1},
-     '1ZHH': {'uR':0, 'uL':1},
-     '3SGQ': {'uR':0, 'uL':1},
-     '1JTG': {'uR':1, 'uL':0},
-     '2O3B': {'uR':0, 'uL':2},
-     '1CGI': {'uR':0, 'uL':1},
-     '1CLV': {'uR':0, 'uL':2},
-     '3F1P': {'uR':0, 'uL':1},
-     '1AK4': {'uR':0, 'uL':1},
-     '1R0R': {'uR':0, 'uL':1},
-     '1GPW': {'uR':0, 'uL':1},
-     '1E96': {'uR':0, 'uL':3},
-     '1FLE': {'uR':0, 'uL':1},
-     '2OOB': {'uR':0, 'uL':1}}
-
 pdbs_dir = os.path.join(my.user_home_path, 'ppi_traj', 'PDBS')
 
 def copy_tmp2dst(src_file, dst_dir, verbose=True):

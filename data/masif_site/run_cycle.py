@@ -2,6 +2,8 @@ import os
 import sys
 import subprocess as sp
 import numpy as np
+
+import my_utils as my
 import data_preparation.extract_and_triangulate_lib as ext_and_trg
 
 args = sys.argv[1:]
@@ -27,7 +29,7 @@ pdb_id = args[0]
 md_id = args[1]
 step =  (N_steps * 2 + 1) if(argc < 3) else int(args[2])
 
-chain_id_in_C = ext_and_trg.chain_ids_table[pdb_id][md_id]
+chain_id_in_C = my.chain_ids_table[pdb_id][md_id]
 model_name = pdb_id + '-' + md_id
 ROCAUC_filename = model_name + '.dat'
 ROCAUC_filepath = os.path.join(ext_and_trg.pdbs_dir, ROCAUC_filename)

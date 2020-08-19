@@ -56,13 +56,14 @@ except:
     exit(1)
 
 ground_truth = mymesh.get_attribute('vertex_iface')
+main_patch_size = np.sum(ground_truth)
 # Compute ROC AUC for this protein. 
 try:
     roc_auc = roc_auc_score(ground_truth, scores[0])
     print("ROC AUC score for protein {} : {:.2f} ".format(ppi_pair_id, roc_auc))
     
     with open(ROCAUC_filepath, 'a') as rocauc_file:
-        print(frame_id, roc_auc, file=rocauc_file)
+        print(frame_id, roc_auc, main_patch_size, file=rocauc_file)
         print('ROCAUC = ' + str(roc_auc))    
 except: 
     print("No ROC AUC computed for protein (possibly, no ground truth defined in input)") 
@@ -89,8 +90,8 @@ if(to_save_scores):
     )
     print("Successfully saved file " + scores_ply_filepath)
 
-precomp_dir = os.path.join(params["masif_precomputation_dir"], ppi_pair_id)
-os.remove(groundtruth_ply_filepath)
-print(groundtruth_ply_filepath, 'deleted')
-shutil.rmtree(precomp_dir)
-print(precomp_dir, 'deleted')
+#precomp_dir = os.path.join(params["masif_precomputation_dir"], ppi_pair_id)
+#os.remove(groundtruth_ply_filepath)
+#print(groundtruth_ply_filepath, 'deleted')
+#shutil.rmtree(precomp_dir)
+#print(precomp_dir, 'deleted')

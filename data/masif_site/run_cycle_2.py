@@ -3,16 +3,17 @@ import sys
 import subprocess as sp
 import numpy as np
 
+import my_utils as my
+
 # ================= cycle params ==================
-pdbs = ['1D6R', '1JTG', '1R6Q', '1RKE', '1Z0K', '1ZHH', '2HQS', '2I25', '2O3B', '2UUY', '3SGQ']
-pdbs = ['1AK4', '1CGI', '1CLV', '1D6R', '1E96', '1FLE', '1GPW', '1JTG', '1R0R', '1R6Q', '1RKE', '1ZHH', '2HQS', '2I25', '2O3B', '2OOB', '2UUY', '3F1P', '3SGQ']
-step = 1000
+pdbs = list(my.chain_ids_table.keys())
+step = 50
 mds = ['uR', 'uL']
 
 # ============== input parse ==============
 args = sys.argv[1:]
 argc = len(args)
-pdbs_to_do = [int(i) for i in args]
+pdbs_to_do = range(len(pdbs)) if(args[0] == 'all') else [int(i) for i in args]
 
 # ================ cycle =====================
 #for pdb_id in pdbs:
