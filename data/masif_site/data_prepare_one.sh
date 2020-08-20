@@ -28,6 +28,7 @@ then
     echo "Only 1 chain provided. Proceeding."
     python -W ignore $masif_source/data_preparation/01-pdb_extract_and_triangulate.py $PDB_ID\_$CHAIN1
 else
+    echo "2 chains provided. Proceeding."
     python -W ignore $masif_source/data_preparation/01-pdb_extract_and_triangulate.py $PDB_ID\_$CHAIN1
     python -W ignore $masif_source/data_preparation/01-pdb_extract_and_triangulate.py $PDB_ID\_$CHAIN2
 fi
