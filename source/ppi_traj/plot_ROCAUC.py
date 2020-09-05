@@ -29,28 +29,7 @@ def get_rmsd(pdb_id, u_md_id, b_md_id, database_path):
     rmsd_ub = md.rmsd(u_traj, b_ref, frame=0, atom_indices=main_chain_atom_ids)
         
     return rmsd_self, rmsd_ub, u_traj.n_frames
-    
-def gauss_classif(fig, ax, x, y, n_comps=2):
-    x_mean = np.mean(x)
-    y_mean = np.mean(y)
-    clf = mixture.GaussianMixture(n_components=n_comps, covariance_type='full')
-    X_train = np.array([x[:], y[:]]).T
-    clf.fit(X_train)
-    
-    X, Y = np.meshgrid(np.linspace(min(x), max(x), 100), np.linspace(min(y), max(y), 100))
-    XX = np.array([X.ravel(), Y.ravel()]).T
-    Z = -clf.score_samples(XX)
-    Z = Z.reshape(X.shape)
-    
-    min_scale = 0
-    max_scale = 3
-    CS = ax.contour(X, Y, Z, norm=LogNorm(vmin=10**min_scale, vmax=10**max_scale), levels=np.logspace(min_scale, max_scale, num=10))
-    CB = fig.colorbar(CS, shrink=0.8)
-    ax.scatter(x, y, s=3)
-    ax.scatter(x_mean, y_mean, s=25, c='red')
-    
-    return x_mean, y_mean
-    
+        
 def proc_scatter(x, y, x_lbl, y_lbl, model_id, x_title=None, save_ext='jpg', to_show=0, n_comps=2, file_dat=None, is_1st=False, is_last=False):
     if(x_title is None):
         x_title = x_lbl
@@ -58,7 +37,7 @@ def proc_scatter(x, y, x_lbl, y_lbl, model_id, x_title=None, save_ext='jpg', to_
     fig, ax = my.get_fig(x_lbl, y_lbl, title=fig_title)
     
     R = stats.pearsonr(x, y)[0]
-    x_mean, y_mean = gauss_classif(fig, ax, x, y, n_comps=n_comps)
+    x_mean, y_mean = my.gauss_classif(fig, ax, x, y, n_comps=n_comps)
     
     if(save_ext):
         fig.savefig(model_id + '_' + x_title + '_' + str(n_comps) + '.' + save_ext)
@@ -98,10 +77,10 @@ def timeseries_proc(time, y, y_axis_label, y_title=None, model_id=None, filter_m
     
     line_label = '; ' + ('k = (' + my.f2str(fit_coefs[0] * 10**k_base) + ' \pm ' + my.f2str(fit_err[0] * 10**k_base) + ') e' + str(-k_base) if(abs(fit_coefs[0]) > fit_err[0]) else '')
     filt_line_label = '; ' + ('k = (' + my.f2str(fit_filt_coefs[0] * 10**k_base) + ' \pm ' + my.f2str(fit_filt_err[0] * 10**k_base) + ') e' + str(-k_base) if(abs(fit_filt_coefs[0]) > fit_filt_err[0]) else '')
-    plot_title = model_id + y_title + '(t); mean = ' + my.f2str(mean_y)
+    plot_title = model_id + '; ' + y_title + '(t); mean = ' + my.f2str(mean_y)
     fig, ax = my.get_fig('time (ns)', y_axis_label, title=plot_title)
     ax.plot(time, y)
-    ax.plot(time, np.polyval(fit_coefs, time), label=r'full; $ ' + line_label + '$')
+    ax.plot(time, np.polyval(fit_coefs, time), label=r'full $' + line_label + '$')
     if(np.any(anomaly_ids)):
         ax.plot(time, np.polyval(fit_filt_coefs, time), label='$' + str(filter_margin) + ' \sigma; ' + filt_line_label + '$')
     ax.legend()   
@@ -132,9 +111,10 @@ def timeseries_proc(time, y, y_axis_label, y_title=None, model_id=None, filter_m
 # ================= cycle params ==================
 pdbs = list(my.chain_ids_table.keys())
 
-step = 1000
+step = 50
+dt = 0.02   # ns
 pdb_dir = 'PDBS'
-N_worst_cases = 10
+N_worst_cases = 5
 verbose = True
 database_path = 'database'
 save_ext_flag = '-save_ext'
@@ -152,7 +132,7 @@ possible_pdbs_ids_numbers = range(len(pdbs) + 1)
     my.parse_args(sys.argv[1:], flags, \
                   possible_values=[possible_pdbs_ids, ['R', 'L'], ['eps', 'jpg'], ['0', '1'], ['0', '1']], \
                   possible_arg_numbers=[possible_pdbs_ids_numbers, [1, 2], [0, 1], [0, 1], [0, 1]], \
-                  default_values=[all_pdbs_const, None, '', '0', '1'])
+                  default_values=[all_pdbs_const, None, '', '0', '0'])
 if(save_ext):
     save_ext = save_ext[0]
 pdbs_ids = range(len(pdbs)) if(pdbs_ids[0] == all_pdbs_const) else [int(i) for i in pdbs_ids]
@@ -163,7 +143,7 @@ to_show = (to_show[0] == '1')
 res_file_humanread = open('rocauc.txt', 'w')
 res_file_dat = open('rocauc.dat', 'w')
 print(r'# ' + ', '.join([pdbs[i] for i in pdbs_ids]) + ' | ' + ', '.join(md_labels), file=res_file_dat)
-print(r'# rocauc_mean   linear_rocauc(t)_k   linear_rocauc(t)_k_err   GTsize_mean   linear_GTsize(t)_k   linear_GTsize(t)_k_err   GTsize_mean   GTsize_rocauc_R   RMSDub_mean  RMSDub_rocauc_R   RMSDself_mean RMSDself_rocauc_R')
+print(r'# rocauc_mean   linear_rocauc(t)_k   linear_rocauc(t)_k_err   GTsize_mean   linear_GTsize(t)_k   linear_GTsize(t)_k_err   GTsize_mean   GTsize_rocauc_R   RMSDub_mean  RMSDub_rocauc_R   RMSDself_mean RMSDself_rocauc_R', file=res_file_dat)
 for pdb_i in pdbs_ids:
     pdb_id = pdbs[pdb_i]
     for part_id in md_labels:
@@ -181,30 +161,44 @@ for pdb_i in pdbs_ids:
         frames_ids = np.intc(data[:, 0])
         rocauc = data[:, 1]
         groundtruth_size = data[:, 2]
-        time = frames_ids * 0.02     
+        time = frames_ids * dt     
         sorted_frames_ids = sorted(enumerate(frames_ids), key=lambda f_i: rocauc[f_i[0]])
                         
-        if(verbose):
-            print('these frames were not found:')
+        if(verbose):            
+            missing_frames = []
             for f_i in range(0, N_frames, step):
                 if(not f_i in frames_ids):
-                    print(f_i)                
+                    missing_frames.append(f_i)
+            if(missing_frames):
+                print('these frames were not found:\n', missing_frames)
             print('\n' + str(N_worst_cases) + ' worst cases:')
             for i in range(N_worst_cases):
                 print('frame', sorted_frames_ids[i][1], ': ROCAUC = ', rocauc[sorted_frames_ids[i][0]])
+                
+            print('\n' + str(N_worst_cases) + ' best cases:')
+            for i in range(N_worst_cases):
+                print('frame', sorted_frames_ids[-1-i][1], ': ROCAUC = ', rocauc[sorted_frames_ids[-1-i][0]])
+                
+            rocauc_mean = np.mean(rocauc)
+            sorted_middle_frames_ids = sorted(enumerate(frames_ids), key=lambda f_i: abs(rocauc[f_i[0]] - rocauc_mean))
+            print('\n' + str(N_worst_cases) + ' typical (close to the average) cases:')
+            for i in range(N_worst_cases):
+                print('frame', sorted_middle_frames_ids[i][1], ': ROCAUC = ', rocauc[sorted_middle_frames_ids[i][0]])
 
-        rmsd_ub = rmsd_ub[frames_ids]
-        rmsd_self = rmsd_self[frames_ids]
+        rmsd_ub_picked = rmsd_ub[frames_ids]
+        rmsd_self_picked = rmsd_self[frames_ids]
                
         # ===== proc & plot =====
         timeseries_proc(time, rocauc, y_axis_label='ROCAUC', model_id=model_id, filter_margin=3, k_base=6, save_ext=save_ext, to_show=0, file_dat=res_file_dat, file_humanread=res_file_humanread, is_1st=True)
         timeseries_proc(time, groundtruth_size, y_axis_label='main GT patch size', y_title='GT', model_id=model_id, filter_margin=3, k_base=3, save_ext=save_ext, to_show=0, file_dat=res_file_dat, file_humanread=res_file_humanread)
+        timeseries_proc(np.arange(N_frames) * dt, rmsd_ub, y_axis_label='RMSD_ub', y_title='RMSDub', model_id=model_id, filter_margin=3, k_base=6, save_ext=save_ext, to_show=0, file_dat=res_file_dat, file_humanread=res_file_humanread)
+        timeseries_proc(np.arange(N_frames) * dt, rmsd_self, y_axis_label='RMSD_self', y_title='RMSDself', model_id=model_id, filter_margin=3, k_base=6, save_ext=save_ext, to_show=0, file_dat=res_file_dat, file_humanread=res_file_humanread)        
         
         for n_comps in range(1, 4):
             dat_file_link = (res_file_dat if(n_comps==1) else None)
             proc_scatter(groundtruth_size, rocauc, 'ground-truth patch size (vertices)', 'ROCAUC', model_id, x_title='GT', save_ext=save_ext, to_show=0, n_comps=n_comps, file_dat=dat_file_link)
-            proc_scatter(rmsd_ub, rocauc, '$rmsd - bR0 (nm)$', 'ROCAUC', model_id, x_title='RMSD_ub', save_ext=save_ext, to_show=0, n_comps=n_comps, file_dat=dat_file_link)
-            proc_scatter(rmsd_self, rocauc, '$rmsd - uR0 (nm)$', 'ROCAUC', model_id, x_title='RMSD_self', save_ext=save_ext, to_show=0, n_comps=n_comps, is_last=True, file_dat=dat_file_link)
+            proc_scatter(rmsd_ub_picked, rocauc, '$rmsd - bR0 (nm)$', 'ROCAUC', model_id, x_title='RMSD_ub', save_ext=save_ext, to_show=0, n_comps=n_comps, file_dat=dat_file_link)
+            proc_scatter(rmsd_self_picked, rocauc, '$rmsd - uR0 (nm)$', 'ROCAUC', model_id, x_title='RMSD_self', save_ext=save_ext, to_show=0, n_comps=n_comps, is_last=True, file_dat=dat_file_link)
         
 res_file_dat.close()
 res_file_humanread.close()

@@ -17,7 +17,7 @@ import my_utils as my
 args = sys.argv[1:]
 argc = len(args)
 if(not argc in [2, 3, 4]): 
-    print('Usage:\n' + sys.argv[0] + '   pdbid1_chain1   pdbid2_chain2   [pdb_path()   [gr_trh_dist (2.0)   [to_recompute ((1)/0)]]')
+    print('Usage:\n' + sys.argv[0] + '   pdbid1_chain1   pdbid2_chain2   [pdb_path('')   [gr_trh_dist (2.0)   [to_recompute ((1)/0)]]')
     sys.exit(1)
     
 ground_truth_cut_dist = float(args[2]) if len(args) > 2 else 2.0
@@ -56,5 +56,5 @@ ext_and_trg.copy_tmp2dst(ply_filepath, masif_opts['ply_chain_dir'])
 #ext_and_trg.copy_tmp2dst(u_chain_filepath, masif_opts['pdb_chain_dir'])
 
 # clean the /tmp dir
-subprocess.run(r'rm /' + os.path.dirname(u_chain_filepath_base) + r'/*' + u_pdb_name + r'*', shell=True)
-subprocess.run(r'rm /' + os.path.dirname(u_chain_filepath_base) + r'/*' + C_pdb_name + r'*', shell=True)
+my.run_it(r'rm ' + os.path.dirname(u_chain_filepath_base) + r'/*' + u_pdb_name + r'*')
+my.run_it(r'rm ' + os.path.dirname(u_chain_filepath_base) + r'/*' + C_pdb_name + r'*')

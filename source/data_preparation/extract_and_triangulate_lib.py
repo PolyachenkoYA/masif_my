@@ -117,7 +117,7 @@ def filter_noise(iface_v, mesh, noise_patch_size=-50, verbose=True):
             N_big_components = len(true_iface_components)
             
             if(N_big_components > 1):
-                print('Warning:\niface components ' + str(big_components_ids) + ' (' + str(N_big_components) + ' items) have the same size = ' + str(max_size) + ' and they all are the biggest ones')
+                print('Warning:\niface components ' + str(true_iface_components) + ' (' + str(N_big_components) + ' items) have the same size = ' + str(max_size) + ' and they all are the biggest ones. Using their union as a ground truth.')
 
         else:
             if(noise_patch_size == -2):

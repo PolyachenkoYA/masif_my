@@ -23,7 +23,7 @@ N_steps = 50100
 chain_names = {0:'A', 1:'B', 2:'C', 3:'D'}
 
 if(not argc in [2, 3]):
-    print('usage:\n' + sys.argv[0] + '   PDB_id   uR/uL   [step (N_steps + 1)]')
+    print('usage:\n' + sys.argv[0] + '   PDBid   uR/uL   [step (N_steps + 1)]')
     exit(1)
 pdb_id = args[0]
 md_id = args[1]

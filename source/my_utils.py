@@ -11,6 +11,8 @@ import scipy
 import scipy.stats as stats
 import pathlib
 import subprocess
+import sklearn.mixture as sk_mixture
+from matplotlib.colors import LogNorm
 
 user_home_path = os.path.expanduser('~')
 error_str = '\n!!ERROR OCCURED!!\n'
@@ -37,20 +39,20 @@ float_digital = r'[+-]?[0-9]+\.[0-9]+'
 
 chain_ids_table = \
     {'2I25': {'uR':1, 'uL':0},  # 0
-     '1Z0K': {'uR':0, 'uL':3},  # 1
+     '1Z0K': {'uR':0, 'uL':3},  # 1 
      '2HQS': {'uR':0, 'uL':1},  # 2
      '1R6Q': {'uR':0, 'uL':1},  # 3
-     '2UUY': {'uR':0, 'uL':1},  # 4
+     '2UUY': {'uR':0, 'uL':1},  # 4 +
      '1RKE': {'uR':1, 'uL':0},  # 5
      '1D6R': {'uR':0, 'uL':1},  # 6
      '1ZHH': {'uR':0, 'uL':1},  # 7
      '3SGQ': {'uR':0, 'uL':1},  # 8
-     '1JTG': {'uR':1, 'uL':0},  # 9
-     '2O3B': {'uR':0, 'uL':2},  # 10
+     '1JTG': {'uR':1, 'uL':0},  # 9 +
+     '2O3B': {'uR':0, 'uL':2},  # 10 +
      '1CGI': {'uR':0, 'uL':1},  # 11
      '1CLV': {'uR':0, 'uL':2},  # 12
      '3F1P': {'uR':0, 'uL':1},  # 13
-     '1AK4': {'uR':0, 'uL':1},  # 14
+     '1AK4': {'uR':0, 'uL':1},  # 14 +
      '1R0R': {'uR':0, 'uL':1},  # 15
      '1GPW': {'uR':0, 'uL':1},  # 16
      '1E96': {'uR':0, 'uL':3},  # 17
@@ -102,13 +104,20 @@ def find_key(keys, key0):
     
     return 0
     
-def run_it(command):
+def run_it(command, shell=False):
+    if(isinstance(command, str)):
+        if(' ' in command):
+            shell = True
+            
     print(command)
-    ok = (os.system(command) == 0)
-    if(not ok):
-        print(error_str)
-    return ok
+    subprocess.run(command, shell=shell)
     
+    #print(command)
+    #ok = (os.system(command) == 0)
+    #if(not ok):
+    #    print(error_str)
+    #return ok
+        
 def f2str(x, n=3):
     return '%s' % float(('%.' + str(n) + 'g') % x)
     
@@ -353,3 +362,26 @@ def safe_copy(src, dst):
 
 def git_root_path():
     return subprocess.run(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).stdout.decode('utf-8')[:-1]
+
+def gauss_classif(fig, ax, x, y, n_comps=2, draw_levels=True):
+    x_mean = np.mean(x)
+    y_mean = np.mean(y)
+    ax.scatter(x, y, s=3)
+    ax.scatter(x_mean, y_mean, s=25, c='red')
+    
+    if(draw_levels):
+        clf = sk_mixture.GaussianMixture(n_components=n_comps, covariance_type='full')
+        X_train = np.array([x[:], y[:]]).T
+        clf.fit(X_train)
+        
+        X, Y = np.meshgrid(np.linspace(min(x), max(x), 100), np.linspace(min(y), max(y), 100))
+        XX = np.array([X.ravel(), Y.ravel()]).T
+        Z = -clf.score_samples(XX)
+        Z = Z.reshape(X.shape)
+        
+        min_scale = 0
+        max_scale = 3
+        CS = ax.contour(X, Y, Z, norm=LogNorm(vmin=10**min_scale, vmax=10**max_scale), levels=np.logspace(min_scale, max_scale, num=10))
+        CB = fig.colorbar(CS, shrink=0.8)
+    
+    return x_mean, y_mean

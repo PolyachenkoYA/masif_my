@@ -67,7 +67,8 @@ try:
         print('ROCAUC = ' + str(roc_auc))    
 except: 
     print("No ROC AUC computed for protein (possibly, no ground truth defined in input)") 
-    
+   
+to_save_scores = True
 if(to_save_scores):
     mymesh.remove_attribute("vertex_iface")
     mymesh.add_attribute("iface")
@@ -90,8 +91,8 @@ if(to_save_scores):
     )
     print("Successfully saved file " + scores_ply_filepath)
 
-#precomp_dir = os.path.join(params["masif_precomputation_dir"], ppi_pair_id)
+precomp_dir = os.path.join(params["masif_precomputation_dir"], ppi_pair_id)
 #os.remove(groundtruth_ply_filepath)
 #print(groundtruth_ply_filepath, 'deleted')
-#shutil.rmtree(precomp_dir)
-#print(precomp_dir, 'deleted')
+shutil.rmtree(precomp_dir)
+print(precomp_dir, 'deleted')
